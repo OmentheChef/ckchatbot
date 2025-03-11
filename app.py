@@ -10,7 +10,7 @@ import base64
 # Set page config
 st.set_page_config(page_title="Document Assistant", layout="wide", initial_sidebar_state="expanded")
 
-# Add custom CSS for modern chat UI styling
+# Add custom CSS for modern chat UI styling and code block overrides
 st.markdown("""
 <style>
 /* Main app background */
@@ -19,7 +19,7 @@ st.markdown("""
     color: #FFFFFF;
 }
 
-/* Chat container with reduced width, centered horizontally, and more vertical spacing */
+/* Chat container with reduced width, centered horizontally, and vertical spacing */
 .chat-container {
     display: flex;
     flex-direction: column;
@@ -57,13 +57,13 @@ st.markdown("""
     margin-top: 10px;
 }
 
-/* Style text areas: smaller text area height */
+/* Style text areas: set height to 70px (minimum required by Streamlit) */
 .stTextArea textarea {
     background-color: #1E1E1E !important;
     color: white !important;
     border: none !important;
     padding: 10px !important;
-    height: 50px !important; /* reduce the height to make it smaller */
+    height: 70px !important; /* must be at least 68px to avoid Streamlit error */
     font-size: 14px !important;
 }
 
@@ -106,13 +106,18 @@ div[data-testid="stTextInput"] input {
     border-radius: 6px !important;
 }
 
-/* Remove or minimize default code block styling */
+/* Neutralize code-block styling in Streamlit */
+[data-testid="stMarkdownContainer"] pre,
 [data-testid="stMarkdownContainer"] pre code,
-[data-testid="stMarkdownContainer"] code {
-    background-color: transparent !important;
-    color: inherit !important;
+[data-testid="stMarkdownContainer"] code,
+[data-testid="stMarkdownContainer"] .highlight {
+    background-color: #0E0E0E !important; /* or transparent if you prefer */
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: none !important;
     border-radius: 0 !important;
     padding: 0 !important;
+    margin: 0 !important;
     font-size: inherit !important;
 }
 </style>
@@ -398,7 +403,7 @@ def handle_submit():
     st.session_state.submitted = True
 
 # Main App Layout
-st.title("")  # We can leave it blank or remove this line if you don't want any title
+st.title("")
 
 # Sidebar
 with st.sidebar:
@@ -488,10 +493,10 @@ with col2:
 
     with st.form(key="message_form", clear_on_submit=True):
         user_input = st.text_area(
-            "What can I help with?", 
-            height=50,
+            "What can I help with?",
             placeholder="Type your message here...",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            height=70  # Must be >=68 to avoid Streamlit error
         )
         submit_button = st.form_submit_button("Send", on_click=handle_submit, use_container_width=True)
         if submit_button and user_input:
