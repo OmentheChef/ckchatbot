@@ -19,12 +19,14 @@ st.markdown("""
     color: #FFFFFF;
 }
 
-/* Chat container */
+/* Chat container with fixed max width and centered horizontally */
 .chat-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 20px;
+    margin: 0 auto;
+    max-width: 800px;
+    width: 100%;
 }
 
 /* Message styling */
@@ -422,7 +424,6 @@ def process_document(uploaded_file):
 
 # Function to handle the form submission
 def handle_submit():
-    # Set the submitted flag
     st.session_state.submitted = True
 
 # Main App Layout
@@ -479,7 +480,6 @@ with st.sidebar:
                 st.session_state.document_context = all_text
                 st.success("All documents processed!")
             
-            # Hide progress bar after completion
             progress_bar.empty()
 
     # Show document context preview
@@ -488,7 +488,6 @@ with st.sidebar:
             preview_text = st.session_state.document_context[:1000] + "..." if len(st.session_state.document_context) > 1000 else st.session_state.document_context
             st.text_area("Document Preview", preview_text, height=200)
         
-        # Option to clear document context
         if st.button("Clear Document Context"):
             st.session_state.document_context = ""
             st.success("Document context cleared!")
@@ -499,7 +498,6 @@ with st.sidebar:
     if enable_web_search != st.session_state.enable_web_search:
         st.session_state.enable_web_search = enable_web_search
 
-    # Separator
     st.markdown("---")
 
     # Archived chats
@@ -515,58 +513,54 @@ with st.sidebar:
     else:
         st.text("No archived chats found.")
 
-    # New Chat button
     if st.button("➕ New Chat", key="new_chat_btn"):
         start_new_chat()
         st.rerun()
 
-# Main chat area
-st.header(st.session_state.chat_title)
-
-# Edit chat title
-new_title = st.text_input("Chat Title", value=st.session_state.chat_title)
-if new_title != st.session_state.chat_title:
-    st.session_state.chat_title = new_title
-
-# Display conversation history with modern styling
-st.subheader("Conversation")
-for message in st.session_state.messages:
-    if message["role"] == "user":
-        st.markdown(f"""<div class="message user-message">
-                    <b>You:</b> {message['content']}
-                    </div>""", unsafe_allow_html=True)
-    elif message["role"] == "assistant":
-        st.markdown(f"""<div class="message assistant-message">
-                    <b>Assistant:</b> {message['content']}
-                    </div>""", unsafe_allow_html=True)
-
-# Message input form with clear functionality
-with st.form(key="message_form", clear_on_submit=True):
-    user_input = st.text_area(
-        "Your message", 
-        height=100,
-        placeholder="Type your message here...",
-        label_visibility="collapsed"
-    )
+# Main chat area wrapped in a centered container using columns
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.header(st.session_state.chat_title)
     
-    # Add a submit button
-    submit_button = st.form_submit_button("Send", on_click=handle_submit, use_container_width=True)
-    
-    # Process the form submission
-    if submit_button and user_input:
-        # Process the message
-        if send_message(user_input):
-            st.rerun()
+    new_title = st.text_input("Chat Title", value=st.session_state.chat_title)
+    if new_title != st.session_state.chat_title:
+        st.session_state.chat_title = new_title
 
-# Download chat history button
-if st.session_state.messages:
-    chat_json = json.dumps(st.session_state.messages, indent=2)
-    b64 = base64.b64encode(chat_json.encode()).decode()
-    download_filename = f"chat_{st.session_state.chat_id[:8]}.json"
+    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     
-    st.markdown(
-        f'<a href="data:file/json;base64,{b64}" download="{download_filename}" '
-        f'class="download-link">'
-        f'<span style="margin-right: 5px;">⬇️</span> Download Chat History</a>',
-        unsafe_allow_html=True
-    )
+    st.subheader("Conversation")
+    for message in st.session_state.messages:
+        if message["role"] == "user":
+            st.markdown(f"""<div class="message user-message">
+                        <b>You:</b> {message['content']}
+                        </div>""", unsafe_allow_html=True)
+        elif message["role"] == "assistant":
+            st.markdown(f"""<div class="message assistant-message">
+                        <b>Assistant:</b> {message['content']}
+                        </div>""", unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    with st.form(key="message_form", clear_on_submit=True):
+        user_input = st.text_area(
+            "Your message", 
+            height=100,
+            placeholder="Type your message here...",
+            label_visibility="collapsed"
+        )
+        submit_button = st.form_submit_button("Send", on_click=handle_submit, use_container_width=True)
+        
+        if submit_button and user_input:
+            if send_message(user_input):
+                st.rerun()
+
+    if st.session_state.messages:
+        chat_json = json.dumps(st.session_state.messages, indent=2)
+        b64 = base64.b64encode(chat_json.encode()).decode()
+        download_filename = f"chat_{st.session_state.chat_id[:8]}.json"
+        st.markdown(
+            f'<a href="data:file/json;base64,{b64}" download="{download_filename}" '
+            f'class="download-link">'
+            f'<span style="margin-right: 5px;">⬇️</span> Download Chat History</a>',
+            unsafe_allow_html=True
+        )
