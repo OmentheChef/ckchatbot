@@ -105,6 +105,16 @@ div[data-testid="stTextInput"] input {
     border-color: #333333 !important;
     border-radius: 6px !important;
 }
+
+/* Remove or minimize default code block styling */
+[data-testid="stMarkdownContainer"] pre code,
+[data-testid="stMarkdownContainer"] code {
+    background-color: transparent !important;
+    color: inherit !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    font-size: inherit !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -388,7 +398,7 @@ def handle_submit():
     st.session_state.submitted = True
 
 # Main App Layout
-st.title("")
+st.title("")  # We can leave it blank or remove this line if you don't want any title
 
 # Sidebar
 with st.sidebar:
