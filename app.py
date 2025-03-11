@@ -25,7 +25,7 @@ st.markdown("""
     flex-direction: column;
     gap: 6px;                /* smaller gap between messages */
     margin: 120px auto 0;    /* 120px top margin to bring it down further */
-    max-width: 400px;        /* narrower chat box */
+    max-width: 200px;        /* narrower chat box */
     width: 100%;
 }
 
