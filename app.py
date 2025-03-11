@@ -19,63 +19,63 @@ st.markdown("""
     color: #FFFFFF;
 }
 
-/* Chat container with fixed max width, centered horizontally, and extra top margin */
+/* Chat container with reduced width, centered horizontally, and more vertical spacing */
 .chat-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin: 80px auto 0 auto; /* 80px top margin to bring it down more */
-    max-width: 600px;         /* Adjust to your desired width */
+    gap: 6px;                /* smaller gap between messages */
+    margin: 120px auto 0;    /* 120px top margin to bring it down further */
+    max-width: 400px;        /* narrower chat box */
     width: 100%;
 }
 
 /* Message styling */
 .message {
-    padding: 12px 16px;
-    border-radius: 8px;
+    padding: 8px 10px;       /* smaller padding around text */
+    border-radius: 6px;
     max-width: 100%;
-    margin: 4px 0;
+    margin: 2px 0;           /* tighter spacing between messages */
     word-wrap: break-word;
+    font-size: 14px;         /* smaller font size if desired */
 }
 
 /* User message styling */
 .user-message {
     background-color: #1E1E1E;
-    margin-right: 0;
 }
 
 /* Assistant message styling */
 .assistant-message {
     background-color: #252525;
-    margin-left: 0;
 }
 
 /* Input area styling */
 .chat-input-area {
     background-color: #1E1E1E;
-    border-radius: 12px;
-    padding: 8px;
-    margin-top: 20px;
+    border-radius: 8px;
+    padding: 6px;
+    margin-top: 10px;
 }
 
-/* Style text areas */
+/* Style text areas: smaller text area height */
 .stTextArea textarea {
     background-color: #1E1E1E !important;
     color: white !important;
     border: none !important;
-    padding: 12px !important;
-    height: 60px !important;
-    font-size: 16px !important;
+    padding: 10px !important;
+    height: 50px !important; /* reduce the height to make it smaller */
+    font-size: 14px !important;
 }
 
 /* Send button styling */
 .send-button {
     background-color: #5046E5 !important;
     color: white !important;
-    border-radius: 8px !important;
-    padding: 8px 16px !important;
-    margin-top: 10px !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    margin-top: 6px !important;
     border: none !important;
+    font-size: 14px !important;
 }
 
 /* Hide default Streamlit elements */
@@ -94,7 +94,8 @@ header {
     text-decoration: none !important;
     display: inline-flex !important;
     align-items: center !important;
-    margin-top: 20px !important;
+    margin-top: 10px !important;
+    font-size: 14px !important;
 }
 
 /* Style the chat title input (if used) */
@@ -102,7 +103,7 @@ div[data-testid="stTextInput"] input {
     background-color: #1E1E1E !important;
     color: white !important;
     border-color: #333333 !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -122,7 +123,6 @@ if 'api_key' not in st.session_state:
 if 'chat_id' not in st.session_state:
     st.session_state.chat_id = str(uuid.uuid4())
 if 'chat_title' not in st.session_state:
-    # You can still store a title internally, but we won't display it
     st.session_state.chat_title = "New Chat " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 if 'document_context' not in st.session_state:
     st.session_state.document_context = ""
@@ -142,16 +142,15 @@ MODELS = {
 # Helper function to extract text from PDF
 def extract_text_from_pdf(pdf_file):
     try:
-        # Install PyPDF2 if not already installed
-        try:
-            from PyPDF2 import PdfReader
-        except ImportError:
-            st.error("PyPDF2 is not installed. Installing now...")
-            import subprocess
-            import sys
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "PyPDF2"])
-            from PyPDF2 import PdfReader
-        
+        from PyPDF2 import PdfReader
+    except ImportError:
+        st.error("PyPDF2 is not installed. Installing now...")
+        import subprocess
+        import sys
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "PyPDF2"])
+        from PyPDF2 import PdfReader
+    
+    try:
         pdf_reader = PdfReader(pdf_file)
         text = ""
         for page in pdf_reader.pages:
@@ -165,16 +164,15 @@ def extract_text_from_pdf(pdf_file):
 # Helper function to extract text from DOCX
 def extract_text_from_docx(docx_file):
     try:
-        # Install python-docx if not already installed
-        try:
-            import docx
-        except ImportError:
-            st.error("python-docx is not installed. Installing now...")
-            import subprocess
-            import sys
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "python-docx"])
-            import docx
-        
+        import docx
+    except ImportError:
+        st.error("python-docx is not installed. Installing now...")
+        import subprocess
+        import sys
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "python-docx"])
+        import docx
+    
+    try:
         doc = docx.Document(docx_file)
         text = ""
         for para in doc.paragraphs:
@@ -193,33 +191,27 @@ def extract_text_from_txt(file):
 # Enhanced web search functionality
 def perform_web_search(query):
     try:
-        # Try DuckDuckGo first
         duckduckgo_url = f"https://api.duckduckgo.com/?q={query}&format=json"
         response = requests.get(duckduckgo_url)
         
         if response.status_code == 200:
             results = response.json()
-            
-            # Format search results
             formatted_results = "Web search results:\n\n"
             
-            # Add abstract if available
             if "AbstractText" in results and results["AbstractText"]:
                 formatted_results += f"Summary: {results['AbstractText']}\n"
                 if "AbstractSource" in results:
                     formatted_results += f"Source: {results['AbstractSource']}\n\n"
             
-            # Add related topics
             if "RelatedTopics" in results and results["RelatedTopics"]:
                 formatted_results += "Related Information:\n"
-                for i, topic in enumerate(results["RelatedTopics"][:5]):  # Limit to 5 topics
+                for i, topic in enumerate(results["RelatedTopics"][:5]):
                     if "Text" in topic:
                         formatted_results += f"- {topic['Text']}\n"
                 
             return formatted_results
         
-        # Fallback to a simplified search simulation if DuckDuckGo fails
-        return f"Web search results for '{query}' (Note: This is simulated since direct web search requires additional API integration)"
+        return f"Web search results for '{query}' (simulation fallback)"
     
     except Exception as e:
         st.error(f"Search error: {str(e)}")
@@ -253,8 +245,6 @@ def openrouter_chat_completion(messages, model):
                 error_data = response.json()
                 error_message = error_data.get('error', {}).get('message', 'Unknown error')
                 st.error(f"API Error: {response.status_code} - {error_message}")
-                
-                # Specific handling for invalid model ID
                 if "not a valid model ID" in error_message:
                     st.warning("Please select a different model from the sidebar.")
             except:
@@ -265,7 +255,7 @@ def openrouter_chat_completion(messages, model):
         st.error(f"Request error: {str(e)}")
         return None
 
-# Function to send a message and get a response
+# Send message function
 def send_message(user_input):
     if not st.session_state.api_key:
         st.error("Please enter your OpenRouter API key in the sidebar.")
@@ -274,56 +264,41 @@ def send_message(user_input):
     if not user_input.strip():
         return False
     
-    # Add user message to chat
     st.session_state.messages.append({"role": "user", "content": user_input})
     
-    # Prepare message history for API
     messages_for_api = []
     
-    # Add initial system message with document context if available
     system_message = "You are a helpful document assistant. You can analyze documents, answer questions, and help with creative writing tasks."
-    
     if st.session_state.document_context:
-        system_message += "\n\nBelow is relevant information from the user's documents that may help answering their query:"
-        # Limit context length to avoid token limits
+        system_message += "\n\nBelow is relevant information from the user's documents:"
         context_limit = 75000
         if len(st.session_state.document_context) > context_limit:
-            system_message += f"\n\n{st.session_state.document_context[:context_limit]} [Document truncated due to length...]"
+            system_message += f"\n\n{st.session_state.document_context[:context_limit]} [Truncated...]"
         else:
             system_message += f"\n\n{st.session_state.document_context}"
     
     messages_for_api.append({"role": "system", "content": system_message})
     
-    # Web search if enabled and requested
+    # Simple check for search triggers
     if st.session_state.enable_web_search and any(term in user_input.lower() for term in ["search", "find", "look up", "google", "information about"]):
         with st.spinner("Searching the web..."):
             search_results = perform_web_search(user_input)
             if search_results:
-                messages_for_api.append({
-                    "role": "system", 
-                    "content": search_results
-                })
+                messages_for_api.append({"role": "system", "content": search_results})
     
-    # Add conversation history (exclude system messages)
     for msg in st.session_state.messages:
         if msg["role"] != "system":
             messages_for_api.append(msg)
     
-    # Make API request
     with st.spinner("Thinking..."):
         response = openrouter_chat_completion(messages_for_api, st.session_state.selected_model)
-        
         if response and "choices" in response and len(response["choices"]) > 0:
             full_response = response["choices"][0]["message"]["content"]
-            
-            # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-            # Auto-save chat
             save_chat()
             return True
         else:
-            st.error("Failed to get a response from the model. Please try again.")
+            st.error("Failed to get a response. Please try again.")
             return False
 
 # Save chat function
@@ -337,15 +312,12 @@ def save_chat():
         "document_context": st.session_state.document_context
     }
     
-    # Save to file
     filename = f"{CHATS_DIR}/{st.session_state.chat_id}.json"
     with open(filename, "w") as f:
         json.dump(chat_data, f)
     
-    # Update archived chats list
-    st.session_state.archived_chats = [chat for chat in st.session_state.archived_chats if chat["id"] != chat_data["id"]]
+    st.session_state.archived_chats = [c for c in st.session_state.archived_chats if c["id"] != chat_data["id"]]
     st.session_state.archived_chats.append(chat_data)
-    
     return filename
 
 # Load chat function
@@ -354,7 +326,6 @@ def load_chat(chat_id):
     if os.path.exists(filename):
         with open(filename, "r") as f:
             chat_data = json.load(f)
-        
         st.session_state.messages = chat_data["messages"]
         st.session_state.chat_id = chat_data["id"]
         st.session_state.chat_title = chat_data["title"]
@@ -379,8 +350,6 @@ def load_archived_chats():
                         chats.append(chat_data)
                 except Exception as e:
                     st.error(f"Error loading chat {filename}: {e}")
-    
-    # Sort by timestamp, newest first
     chats.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
     st.session_state.archived_chats = chats
 
@@ -391,9 +360,7 @@ def start_new_chat():
     st.session_state.chat_title = "New Chat " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     st.session_state.document_context = ""
 
-# Process document function
 def process_document(uploaded_file):
-    # Create a temporary file
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         temp_file.write(uploaded_file.getvalue())
         temp_file_path = temp_file.name
@@ -417,24 +384,19 @@ def process_document(uploaded_file):
     finally:
         os.unlink(temp_file_path)
 
-# Function to handle the form submission
 def handle_submit():
     st.session_state.submitted = True
 
 # Main App Layout
-# (Optional) You can remove or rename this if you want even fewer headings
-st.title("Document Assistant")
+st.title("")
 
 # Sidebar
 with st.sidebar:
     st.title("Settings")
-
-    # API Key input
     api_key = st.text_input("OpenRouter API Key", value=st.session_state.api_key, type="password")
     if api_key != st.session_state.api_key:
         st.session_state.api_key = api_key
 
-    # Model selection
     st.subheader("Model Selection")
     selected_model_name = st.selectbox(
         "Choose a model",
@@ -443,53 +405,39 @@ with st.sidebar:
     )
     st.session_state.selected_model = MODELS[selected_model_name]
 
-    # Document upload
     st.subheader("Upload Documents")
-    uploaded_files = st.file_uploader(
-        "Upload documents", 
-        accept_multiple_files=True,
-        type=["txt", "pdf", "docx"]
-    )
-
+    uploaded_files = st.file_uploader("Upload documents", accept_multiple_files=True, type=["txt", "pdf", "docx"])
     if uploaded_files:
         process_button = st.button("Process Documents")
         if process_button:
             progress_bar = st.progress(0)
             all_text = ""
-            
             for i, uploaded_file in enumerate(uploaded_files):
                 progress_percent = int((i / len(uploaded_files)) * 100)
                 progress_bar.progress(progress_percent)
                 st.text(f"Processing {uploaded_file.name}...")
-                
                 text = process_document(uploaded_file)
-                
                 if not text.startswith("Error"):
                     all_text += f"\n\n--- Document: {uploaded_file.name} ---\n\n" + text
                     st.success(f"Processed {uploaded_file.name}")
                 else:
                     st.error(f"Failed to process {uploaded_file.name}: {text}")
-            
             progress_bar.progress(100)
-            
             if all_text.strip():
                 st.session_state.document_context = all_text
                 st.success("All documents processed!")
-            
             progress_bar.empty()
 
-    # Show document context preview
     if st.session_state.document_context:
         if st.checkbox("Show Document Preview"):
             preview_text = (st.session_state.document_context[:1000] + "...") \
                 if len(st.session_state.document_context) > 1000 else st.session_state.document_context
-            st.text_area("Document Preview", preview_text, height=200)
+            st.text_area("Document Preview", preview_text, height=150)
         
         if st.button("Clear Document Context"):
             st.session_state.document_context = ""
             st.success("Document context cleared!")
 
-    # Web search option
     st.subheader("Web Search")
     enable_web_search = st.checkbox("Enable Web Search", value=st.session_state.enable_web_search)
     if enable_web_search != st.session_state.enable_web_search:
@@ -497,7 +445,6 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # Archived chats
     st.subheader("Archived Chats")
     if not st.session_state.archived_chats:
         load_archived_chats()
@@ -517,37 +464,30 @@ with st.sidebar:
 # Main chat area wrapped in a centered container
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    # Removed the old chat title display and subheader for a cleaner look
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-
-    # Display conversation history
     for message in st.session_state.messages:
         if message["role"] == "user":
             st.markdown(f"""<div class="message user-message">
-                        <b>You:</b> {message['content']}
+                        {message['content']}
                         </div>""", unsafe_allow_html=True)
         elif message["role"] == "assistant":
             st.markdown(f"""<div class="message assistant-message">
-                        <b>Assistant:</b> {message['content']}
+                        {message['content']}
                         </div>""", unsafe_allow_html=True)
-    
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Input form
     with st.form(key="message_form", clear_on_submit=True):
         user_input = st.text_area(
-            "Your message", 
-            height=100,
+            "What can I help with?", 
+            height=50,
             placeholder="Type your message here...",
             label_visibility="collapsed"
         )
         submit_button = st.form_submit_button("Send", on_click=handle_submit, use_container_width=True)
-        
         if submit_button and user_input:
             if send_message(user_input):
                 st.rerun()
 
-    # Download chat history
     if st.session_state.messages:
         chat_json = json.dumps(st.session_state.messages, indent=2)
         b64 = base64.b64encode(chat_json.encode()).decode()
