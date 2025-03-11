@@ -19,13 +19,13 @@ st.markdown("""
     color: #FFFFFF;
 }
 
-/* Chat container with fixed max width and centered horizontally */
+/* Chat container with fixed max width, centered horizontally, and extra top margin */
 .chat-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin: 0 auto;
-    max-width: 800px;
+    margin: 80px auto 0 auto; /* 80px top margin to bring it down more */
+    max-width: 600px;         /* Adjust to your desired width */
     width: 100%;
 }
 
@@ -83,11 +83,6 @@ header {
     visibility: hidden;
 }
 
-/* Conversation title styling */
-h1, h2, h3 {
-    color: white !important;
-}
-
 /* For the sidebar */
 .css-1d391kg, .css-1v3fvcr {
     background-color: #0E0E0E;
@@ -102,7 +97,7 @@ h1, h2, h3 {
     margin-top: 20px !important;
 }
 
-/* Style the chat title input */
+/* Style the chat title input (if used) */
 div[data-testid="stTextInput"] input {
     background-color: #1E1E1E !important;
     color: white !important;
@@ -127,6 +122,7 @@ if 'api_key' not in st.session_state:
 if 'chat_id' not in st.session_state:
     st.session_state.chat_id = str(uuid.uuid4())
 if 'chat_title' not in st.session_state:
+    # You can still store a title internally, but we won't display it
     st.session_state.chat_title = "New Chat " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 if 'document_context' not in st.session_state:
     st.session_state.document_context = ""
@@ -137,7 +133,7 @@ if 'enable_web_search' not in st.session_state:
 if 'submitted' not in st.session_state:
     st.session_state.submitted = False
 
-# Models available in OpenRouter - Updated with requested order
+# Models available in OpenRouter
 MODELS = {
     "OpenAI GPT-4o": "openai/gpt-4o",
     "GPT-4 Turbo": "openai/gpt-4-turbo",
@@ -419,7 +415,6 @@ def process_document(uploaded_file):
         
         return text
     finally:
-        # Clean up the temp file
         os.unlink(temp_file_path)
 
 # Function to handle the form submission
@@ -427,6 +422,7 @@ def handle_submit():
     st.session_state.submitted = True
 
 # Main App Layout
+# (Optional) You can remove or rename this if you want even fewer headings
 st.title("Document Assistant")
 
 # Sidebar
@@ -443,7 +439,7 @@ with st.sidebar:
     selected_model_name = st.selectbox(
         "Choose a model",
         list(MODELS.keys()),
-        index=0  # Default to first model (Claude 3.5 Sonnet)
+        index=0
     )
     st.session_state.selected_model = MODELS[selected_model_name]
 
@@ -485,7 +481,8 @@ with st.sidebar:
     # Show document context preview
     if st.session_state.document_context:
         if st.checkbox("Show Document Preview"):
-            preview_text = st.session_state.document_context[:1000] + "..." if len(st.session_state.document_context) > 1000 else st.session_state.document_context
+            preview_text = (st.session_state.document_context[:1000] + "...") \
+                if len(st.session_state.document_context) > 1000 else st.session_state.document_context
             st.text_area("Document Preview", preview_text, height=200)
         
         if st.button("Clear Document Context"):
@@ -517,18 +514,13 @@ with st.sidebar:
         start_new_chat()
         st.rerun()
 
-# Main chat area wrapped in a centered container using columns
+# Main chat area wrapped in a centered container
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.header(st.session_state.chat_title)
-    
-    new_title = st.text_input("Chat Title", value=st.session_state.chat_title)
-    if new_title != st.session_state.chat_title:
-        st.session_state.chat_title = new_title
-
+    # Removed the old chat title display and subheader for a cleaner look
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-    
-    st.subheader("Conversation")
+
+    # Display conversation history
     for message in st.session_state.messages:
         if message["role"] == "user":
             st.markdown(f"""<div class="message user-message">
@@ -541,6 +533,7 @@ with col2:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # Input form
     with st.form(key="message_form", clear_on_submit=True):
         user_input = st.text_area(
             "Your message", 
@@ -554,6 +547,7 @@ with col2:
             if send_message(user_input):
                 st.rerun()
 
+    # Download chat history
     if st.session_state.messages:
         chat_json = json.dumps(st.session_state.messages, indent=2)
         b64 = base64.b64encode(chat_json.encode()).decode()
